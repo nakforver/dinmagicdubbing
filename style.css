@@ -73,3 +73,40 @@ aside>.card{order:1}
   .hero p{font-size:14.5px}
   .chips{margin-top:14px}
 }
+
+/* === Layout mode setting + Android polish (2026-11-15) === */
+/* Segmented Layout control — own classes only, so the app's tab logic (data-tab) is untouched */
+.seg{display:flex;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:5px;gap:5px}
+.segbtn{flex:1;min-height:44px;border:0;border-radius:10px;background:transparent;color:var(--txt);font:inherit;font-weight:600;cursor:pointer}
+.segbtn.on{background:var(--grad);color:#fff;box-shadow:0 6px 18px rgba(124,108,255,.35)}
+/* Phone mode: force the Android layout at any width */
+html.layout-phone .layout{grid-template-columns:minmax(0,1fr)}
+html.layout-phone aside{position:static}
+html.layout-phone .hero{padding:16px 4px 18px}
+html.layout-phone .hero h2{font-size:clamp(26px,8vw,34px)}
+html.layout-phone .hero p{display:none}
+html.layout-phone .chips{flex-wrap:nowrap;justify-content:flex-start;overflow-x:auto;padding-bottom:4px;scrollbar-width:none}
+html.layout-phone .chips::-webkit-scrollbar{display:none}
+html.layout-phone .two{grid-template-columns:1fr}
+html.layout-phone .ctrl{position:sticky;top:calc(72px + env(safe-area-inset-top,0px));z-index:30;flex-direction:column;align-items:stretch;background:color-mix(in srgb,var(--bg) 82%,transparent);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid var(--line);border-radius:16px;padding:12px}
+html.layout-phone .ctrl .vol{width:100%}
+html.layout-phone .cta-split{width:100%}
+html.layout-phone .tabs button{min-height:46px}
+html.layout-phone button.b{min-height:44px}
+html.layout-phone .km-ed{font-size:17px}
+/* Desktop mode: force two columns at any width */
+html.layout-desktop .layout{grid-template-columns:minmax(0,1.25fr) minmax(0,1fr)}
+html.layout-desktop aside{position:sticky;top:calc(76px + env(safe-area-inset-top,0px))}
+html.layout-desktop .hero{padding:30px 12px 24px}
+html.layout-desktop .hero h2{font-size:clamp(28px,4.6vw,44px)}
+html.layout-desktop .hero p{display:block}
+html.layout-desktop .two{grid-template-columns:1fr 1fr}
+html.layout-desktop .ctrl{position:static;flex-direction:row;align-items:center;background:transparent;border:0;padding:0;backdrop-filter:none;-webkit-backdrop-filter:none}
+html.layout-desktop .cta-split{width:auto}
+/* Android polish: shorter hero, swipeable chips, bigger Khmer subtitle text */
+@media (max-width:600px){
+  .hero p{display:none}
+  .chips{flex-wrap:nowrap;justify-content:flex-start;overflow-x:auto;padding-bottom:4px;scrollbar-width:none}
+  .chips::-webkit-scrollbar{display:none}
+  .km-ed{font-size:17px}
+}

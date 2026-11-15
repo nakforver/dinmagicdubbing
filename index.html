@@ -17,7 +17,8 @@
   <link
     href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;family=Space+Grotesk:wght@500;600;700&amp;family=Noto+Sans+Khmer:wght@400;600;700&amp;display=swap"
     rel="stylesheet" />
-  <link rel="stylesheet" href="style.css?v=e4c6f94c" />
+  <link rel="stylesheet" href="style.css?v=20261115a" />
+  <script>try{var _lm=localStorage.getItem('dinmagic_layout');if(_lm==='phone'||_lm==='desktop')document.documentElement.classList.add('layout-'+_lm);}catch(e){}</script>
 </head>
 
 <body>
@@ -422,6 +423,13 @@ gemini-2.0-flash-exp</textarea>
                 High quality Gemini voice models for natural Khmer video dubbing. Each subtitle line is timed to match the video.
               </p>
             </div>
+            <label class="f">Layout</label>
+            <div class="seg" id="layoutSeg" role="group" aria-label="Layout mode">
+              <button type="button" class="segbtn" data-layout="auto">Auto</button>
+              <button type="button" class="segbtn" data-layout="phone">📱 Phone</button>
+              <button type="button" class="segbtn" data-layout="desktop">🖥️ Desktop</button>
+            </div>
+            <p class="note">Phone forces the Android layout on any screen; Desktop forces two columns. Auto follows your screen size. Your choice is saved on this device.</p>
           </section>
           <section class="panel" id="tab-subs" hidden="">
             <p class="note" style="margin:0 0 10px">
@@ -521,6 +529,36 @@ Hello everyone, welcome back.">
   <div class="toast" id="toast">
   </div>
   <script src="app.js?v=9c8211a7"></script>
+  <script>
+    /* Layout mode setting (2026-11-15): Auto / Phone / Desktop, saved on this device.
+       Presentation only — does not touch the app logic in app.js. */
+    (function () {
+      var KEY = 'dinmagic_layout';
+      var seg = document.getElementById('layoutSeg');
+      function apply(mode) {
+        var root = document.documentElement;
+        root.classList.remove('layout-phone', 'layout-desktop');
+        if (mode === 'phone') root.classList.add('layout-phone');
+        if (mode === 'desktop') root.classList.add('layout-desktop');
+        if (seg) seg.querySelectorAll('.segbtn').forEach(function (b) {
+          var on = b.dataset.layout === mode;
+          b.classList.toggle('on', on);
+          b.setAttribute('aria-pressed', on ? 'true' : 'false');
+        });
+      }
+      var saved = 'auto';
+      try { saved = localStorage.getItem(KEY) || 'auto'; } catch (e) {}
+      if (saved !== 'auto' && saved !== 'phone' && saved !== 'desktop') saved = 'auto';
+      apply(saved);
+      if (seg) seg.addEventListener('click', function (ev) {
+        var btn = ev.target.closest('.segbtn');
+        if (!btn) return;
+        var mode = btn.dataset.layout || 'auto';
+        try { localStorage.setItem(KEY, mode); } catch (e) {}
+        apply(mode);
+      });
+    })();
+  </script>
 </body>
 
 </html>
