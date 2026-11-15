@@ -56,3 +56,20 @@
   .chips span{font-size:11px}
   .drop{padding:18px 14px}
 }
+
+/* === Layout organization (2026-11-15): clear step order, setup before results === */
+/* Side column workflow order: Setup first, Results second (DOM order untouched) */
+aside>.card{order:1}
+#resCard{order:2}
+/* Numbered step labels */
+.step-label{display:flex;align-items:center;gap:9px;margin:0 0 14px;font-size:11.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--mute)}
+.step-label span{width:22px;height:22px;border-radius:50%;flex:none;display:grid;place-items:center;font-size:12px;font-weight:800;letter-spacing:0;background:var(--grad);color:#fff;box-shadow:0 4px 12px rgba(124,108,255,.4)}
+/* Results card stands out from Setup once it appears */
+#resCard{border-color:color-mix(in srgb,var(--acc3) 30%,var(--line))}
+/* Compact hero on desktop: the tool starts higher */
+@media (min-width:601px){
+  .hero{padding:30px 12px 24px}
+  .hero h2{font-size:clamp(28px,4.6vw,44px)}
+  .hero p{font-size:14.5px}
+  .chips{margin-top:14px}
+}
