@@ -2,7 +2,7 @@
 
 ## Scope
 
-Turn the existing MT Dubber Free frontend into a runnable local website that supports the complete browser workflow: choose a local video, transcribe and translate with Gemini, generate Khmer voice with Edge or Gemini, align and mix audio, and export the final MP4/WebM file in the browser.
+Turn the existing dinmagicdubbing frontend into a runnable local website that supports the complete browser workflow: choose a local video, transcribe and translate with Gemini, generate Khmer voice with Edge or Gemini, align and mix audio, and export the final MP4/WebM file in the browser.
 
 ## Implementation decisions
 
