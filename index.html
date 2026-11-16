@@ -326,6 +326,24 @@ gemini-2.0-flash-exp</textarea>
               មានអត្ថបទខ្មែររួច? ជ្រើសឯកសារ .srt, .vtt, .txt ឬវាយខាងក្រោម។
               ជម្រើសនេះរំលងការស្ដាប់ និងបកប្រែ ហើយបង្កើតសំឡេងតាមអត្ថបទរបស់អ្នក។
             </p>
+            <div id="whisperBox" style="margin-bottom:12px">
+              <label class="f" for="whisperUrl">🎙️ Whisper transcript — ក្នុងម៉ាស៊ីនខ្លួនឯង (មិនប្រើ Gemini)</label>
+              <div style="display:flex;gap:8px;margin-top:6px">
+                <input id="whisperUrl" type="text" value="http://127.0.0.1:8001" spellcheck="false" style="flex:1" />
+                <select id="whisperLang" style="width:110px">
+                  <option value="zh" selected="">ចិន</option>
+                  <option value="en">អង់គ្លេស</option>
+                  <option value="ko">កូរ៉េ</option>
+                  <option value="ja">ជប៉ុន</option>
+                  <option value="">Auto</option>
+                </select>
+              </div>
+              <div style="display:flex;gap:10px;align-items:center;margin-top:8px">
+                <button class="b" id="whisperBtn" type="button">🎙️ Transcribe with Whisper</button>
+                <span class="note" id="whisperStatus" style="margin:0">ត្រូវការ whisper-server.py ដំណើរការលើកុំព្យូទ័រ។</span>
+              </div>
+              <p class="note">ផ្ញើវីដេអូទៅ Whisper server ក្នុងម៉ាស៊ីនរបស់អ្នក រួចបំពេញអត្ថបទខាងក្រោមដោយស្វ័យប្រវត្តិ។ បន្ទាប់មកជ្រើស Translate Only ដើម្បីឱ្យ Gemini បកប្រែជាខ្មែរ។</p>
+            </div>
             <input type="file" id="srt" accept=".srt,.vtt,.txt" style="font-size:13px" />
             <textarea id="srtText" style="min-height:150px;margin-top:10px" placeholder="1
 00:00:01,000 --> 00:00:03,500
@@ -543,6 +561,7 @@ gemini-2.0-flash-exp</textarea>
   </div>
   <script src="app.js?v=9c8211a7"></script>
   <script src="android.js?v=20261116b"></script>
+  <script src="whisper.js?v=20261116c"></script>
 </body>
 
 </html>
