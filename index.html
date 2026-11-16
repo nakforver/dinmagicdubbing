@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="km">
 
 <head>
   <meta charset="utf-8" />
@@ -17,7 +17,8 @@
   <link
     href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;family=Space+Grotesk:wght@500;600;700&amp;family=Noto+Sans+Khmer:wght@400;600;700&amp;display=swap"
     rel="stylesheet" />
-  <link rel="stylesheet" href="style.css?v=20261115a" />
+  <link rel="stylesheet" href="style.css?v=20261116b" />
+  <link rel="stylesheet" href="android.css?v=20261116b" />
   <script>try{var _lm=localStorage.getItem('dinmagic_layout');if(_lm==='phone'||_lm==='desktop')document.documentElement.classList.add('layout-'+_lm);}catch(e){}</script>
 </head>
 
@@ -43,7 +44,7 @@
             dinmagicdubbing
           </h1>
           <p>
-            AI video dubbing · free-tier friendly · runs in your browser
+            វីដេអូ និងសំឡេងខ្មែរ
           </p>
         </div>
       </div>
@@ -52,7 +53,7 @@
           <span>❤</span>
           <b>Support me</b>
         </button>
-        <button class="icon" id="theme" title="Light / dark">
+        <button class="icon" id="theme" title="Light / dark" aria-label="ប្ដូរពន្លឺផ្ទាំង">
           ◐
         </button>
       </div>
@@ -63,155 +64,41 @@
         AI Dubbing Studio · ភាសាខ្មែរ
       </div>
       <h2>
-        Dub any video into
-        <span class="grad">Khmer</span>
+        បញ្ចូលសំឡេង
+        <span class="grad">ភាសាខ្មែរ</span>
       </h2>
       <p>
-        Transcribe, translate and voice-over in one click — right in your browser. Your video never leaves your device.
+        ជ្រើសវីដេអូ បកប្រែ និងកែសំឡេងនៅក្នុង browser។ សំឡេង និងអត្ថបទត្រូវផ្ញើទៅសេវា AI ដែលអ្នកជ្រើស។
       </p>
       <div class="chips">
         <span><b>✦</b> Free-tier friendly</span>
         <span><b>✦</b> Natural Khmer voices</span>
-        <span><b>✦</b> 100% private</span>
+        <span><b>✦</b> កែអត្ថបទតាមបន្ទាត់</span>
         <span><b>✦</b> Frame-accurate export</span>
       </div>
     </section>
     <div class="layout">
-      <main>
-        <div class="card">
-          <p class="step-label"><span>2</span> Upload &amp; Dub</p>
-          <div class="drop" id="drop">
-            <div class="dz">
-              ⬆
-            </div>
-            <div>
-              <b id="dropTxt">Drop a video here or click to browse</b>
-              <small>MP4, MOV, WebM · the file never leaves your device</small>
-            </div>
-          </div>
-          <input type="file" id="file" accept="video/*" hidden="" />
-          <div class="stage" id="stage" hidden="">
-            <video id="v" controls="" playsinline="" preload="auto">
-            </video>
-            <div id="cap">
-            </div>
-          </div>
-          <div class="ctrl">
-            <label class="vol">
-              🔉 Original audio
-              <input type="range" id="vol" min="0" max="100" value="0" data-save="" />
-            </label>
-            <div class="cta-split" id="goWrap">
-              <button class="cta" id="go" disabled="" type="button">
-                ✨ Dub to Khmer
-              </button>
-              <button class="cta-mode" id="goModeBtn" type="button" title="Choose Full Dub or Translate Only">
-                <span id="goModeLbl">Full Dub</span> ▾
-              </button>
-              <div class="cta-menu" id="goMenu" hidden="">
-                <button type="button" data-mode="all" class="on">
-                  <b>✨ Dub All Process</b>
-                  <small>Transcribe → Translate → Auto Piseth/Sreymom voice & play</small>
-                </button>
-                <button type="button" data-mode="translate">
-                  <b>📝 Translate Only</b>
-                  <small>Transcribe & translate first so you can edit subtitles & gender before audio</small>
-                </button>
-              </div>
-            </div>
-          </div>
-          <div class="track">
-            <i id="bar"></i>
-          </div>
-          <ol class="steps">
-            <li class="s" id="s1">
-              <i><span>1</span></i>
-              Transcribe
-            </li>
-            <li class="s" id="s2">
-              <i><span>2</span></i>
-              Translate
-            </li>
-            <li class="s" id="s3">
-              <i><span>3</span></i>
-              Khmer voice
-            </li>
-          </ol>
-          
-          <div class="busy" id="busy">
-            <div class="ai-core">
-              <div class="ai-orb">
-                <div class="ai-ring"></div>
-                <div class="ai-center">AI</div>
-              </div>
-            </div>
-            <div class="eq-visualizer">
-              <b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b>
-              <b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b>
-            </div>
-            <div class="bm">
-              <div class="stage-tag">
-                <span class="live-dot"></span>
-                <span id="bstage">AI Dubbing Engine</span>
-              </div>
-              <div class="bt" id="bt">Getting ready</div>
-              <div class="bs" id="bs">Please keep this tab open</div>
-            </div>
-          </div>
-          <p id="log">
-          </p>
-          <div class="blog">
-            <div class="bh">
-              <span>Backend log</span>
-              <button type="button" id="blogclear">
-                Clear
-              </button>
-            </div>
-            <div id="blogbody">
-            </div>
-          </div>
-        </div>
-      </main>
-      <aside>
-        
-        <div class="card" id="resCard" hidden="">
-          <p class="step-label"><span>3</span> Subtitles &amp; Export</p>
-          <h2>
-            Khmer script
-            <span class="btns">
-              <button class="b" id="genv">🔊 Voice</button>
-              <button class="b" id="replay">▶ Replay</button>
-              <button class="b" id="dlaudio">⬇ Audio</button>
-              <button class="b" id="dl">⬇ .srt</button>
-              <button class="b p" id="exp">🎞 Export dubbed video</button>
-            </span>
-          </h2>
-          <div class="edit-hint" id="editHint" hidden="">
-            <span>✎ Edit Khmer text or click <b>♂ Piseth</b> / <b>♀ Sreymom</b> on any line, then press <b>🔊 Generate Audio</b>.</span>
-          </div>
-          <div class="list" id="list">
-          </div>
-          <p class="note" id="voiceNote">
-          </p>
-        </div>
-
-        
-        <div class="card">
-          <p class="step-label"><span>1</span> Setup · Key &amp; Voice</p>
+      <aside id="settings">
+        <details class="card setup-card" id="setupCard" open>
+          <summary class="setup-summary">
+            <span class="step-label"><span>1</span> កំណត់ API និងសំឡេង</span>
+            <span id="setupState" class="setup-state">បញ្ចូល API Key ឬអត្ថបទខ្មែរ</span>
+          </summary>
+          <div class="setup-content">
           <div class="tabs">
             <button class="on" data-tab="prov">
-              Providers
+              API Key
             </button>
             <button data-tab="pipe">
-              Pipeline
+              សំឡេង
             </button>
             <button data-tab="subs">
-              Subtitles
+              អត្ថបទ
             </button>
           </div>
           <section class="panel" id="tab-prov">
             <p class="note" style="margin:0 0 12px">
-              Add each key in its own box (＋ Add key). Keys are automatically verified with Google before adding.
+              បញ្ចូល Gemini API Key មួយក្នុងមួយប្រអប់។ Key នឹងត្រូវផ្ទៀងផ្ទាត់ជាមួយ Google។
             </p>
             <div class="prov">
               <div class="ph">
@@ -224,6 +111,8 @@
               </div>
               <textarea id="key" data-save="" placeholder="AIza… or AQ.… (one per line)" spellcheck="false">
                 </textarea>
+              <details class="advanced-models">
+                <summary>ជម្រើសម៉ូដែលបន្ថែម</summary>
               <div class="mrow">
                 <span>Models</span>
                 <button class="b" data-refresh="gemini">
@@ -257,23 +146,24 @@ gemini-1.5-flash-latest
 gemini-1.5-flash-8b
 gemini-1.5-pro
 gemini-1.5-pro-latest</textarea>
+              </details>
             </div>
             <p class="note" id="used">
             </p>
           </section>
           <section class="panel" id="tab-pipe" hidden="">
             <label class="f" for="voice">
-              Khmer voice
+              សំឡេងខ្មែរ
             </label>
             <select id="voice" data-save="">
               <option value="edge" selected="">
-                Edge voice — Sreymom / Piseth (natural Khmer, exportable)
+                Edge · Sreymom / Piseth
               </option>
               <option value="gemini">
-                Gemini voice (just open the page, works on any device, exportable)
+                Gemini · សំឡេង AI
               </option>
               <option value="device">
-                This device’s Khmer voice (no export)
+                សំឡេងលើឧបករណ៍ · មិនអាច Export
               </option>
             </select>
             <div id="v-edge">
@@ -283,13 +173,13 @@ gemini-1.5-pro-latest</textarea>
               <div class="two">
                 <select id="evoice" data-save="">
                   <option value="auto" selected="">
-                    Auto from subtitle gender (♂ Piseth / ♀ Sreymom)
+                    ស្វ័យប្រវត្តិ តាមបន្ទាត់
                   </option>
                   <option value="km-KH-PisethNeural">
-                    Piseth (male only)
+                    Piseth · ប្រុស
                   </option>
                   <option value="km-KH-SreymomNeural">
-                    Sreymom (female only)
+                    Sreymom · ស្រី
                   </option>
                 </select>
                 <input type="hidden" id="eurl" value="https://khmer-voice-1.onrender.com" />
@@ -429,23 +319,141 @@ gemini-2.0-flash-exp</textarea>
               <button type="button" class="segbtn" data-layout="phone">📱 Phone</button>
               <button type="button" class="segbtn" data-layout="desktop">🖥️ Desktop</button>
             </div>
-            <p class="note">Phone forces the Android layout on any screen; Desktop forces two columns. Auto follows your screen size. Your choice is saved on this device.</p>
+            <p class="note" id="layoutHint">Auto រៀបតាមទំហំអេក្រង់។ ទូរស័ព្ទតូចប្រើមួយជួរឈរ ដើម្បីងាយអាន និងចុច។</p>
           </section>
           <section class="panel" id="tab-subs" hidden="">
             <p class="note" style="margin:0 0 10px">
-              Optional: paste your Khmer subtitles (.srt) or plain Khmer text.
-              Transcription and translation are skipped completely: the text is used exactly as written and goes
-              straight
-              to the voice. Plain lines are spread evenly across the video.
+              មានអត្ថបទខ្មែររួច? ជ្រើសឯកសារ .srt, .vtt, .txt ឬវាយខាងក្រោម។
+              ជម្រើសនេះរំលងការស្ដាប់ និងបកប្រែ ហើយបង្កើតសំឡេងតាមអត្ថបទរបស់អ្នក។
             </p>
             <input type="file" id="srt" accept=".srt,.vtt,.txt" style="font-size:13px" />
             <textarea id="srtText" style="min-height:150px;margin-top:10px" placeholder="1
 00:00:01,000 --> 00:00:03,500
-Hello everyone, welcome back.">
+សួស្ដីអ្នកទាំងអស់គ្នា សូមស្វាគមន៍។">
               </textarea>
           </section>
-        </div>
+          <button type="button" class="b setup-continue" id="setupContinue">ទៅកាន់វីដេអូ ↓</button>
+          </div>
+        </details>
       </aside>
+      <main id="studio">
+        <div class="card studio-card" id="uploadCard">
+          <h2 class="step-label" id="uploadTitle" tabindex="-1"><span>2</span> ជ្រើសវីដេអូ និងបញ្ចូលសំឡេង</h2>
+          <div class="drop" id="drop" role="button" tabindex="0" aria-label="ជ្រើសឯកសារវីដេអូ" aria-controls="file">
+            <div class="dz">
+              ⬆
+            </div>
+            <div>
+              <b id="dropTxt">ចុចដើម្បីជ្រើសវីដេអូ</b>
+              <small>MP4, MOV, WebM · ជ្រើសពីឯកសារ ឬ Gallery</small>
+            </div>
+          </div>
+          <input type="file" id="file" accept="video/*" hidden="" />
+          <div class="stage" id="stage" hidden="">
+            <video id="v" controls="" playsinline="" preload="auto">
+            </video>
+            <div id="cap">
+            </div>
+          </div>
+          <div class="ctrl">
+            <label class="vol">
+              🔉 សំឡេងដើម
+              <input type="range" id="vol" min="0" max="100" value="0" data-save="" aria-label="កម្រិតសំឡេងដើម" />
+              <output id="volumeValue" for="vol">0%</output>
+            </label>
+            <div class="cta-split" id="goWrap">
+              <button class="cta" id="go" disabled="" type="button">
+                ✨ បញ្ចូលសំឡេងខ្មែរ
+              </button>
+              <button class="cta-mode" id="goModeBtn" type="button" title="Choose Full Dub or Translate Only" aria-label="ជ្រើសបកប្រែ ឬបញ្ចូលសំឡេង" aria-controls="goMenu" aria-expanded="false">
+                <span id="goModeLbl">Full Dub</span> ▾
+              </button>
+              <div class="cta-menu" id="goMenu" hidden="">
+                <button type="button" data-mode="all" class="on">
+                  <b>✨ បញ្ចូលសំឡេង</b>
+                  <small>ស្ដាប់ → បកប្រែ → បង្កើតសំឡេង ហើយចាក់វីដេអូ</small>
+                </button>
+                <button type="button" data-mode="translate">
+                  <b>📝 បកប្រែសិន</b>
+                  <small>កែអក្សរ និងជ្រើសសំឡេងតាមបន្ទាត់ មុនបង្កើតសំឡេង</small>
+                </button>
+              </div>
+            </div>
+          </div>
+          <div class="track">
+            <i id="bar"></i>
+          </div>
+          <ol class="steps">
+            <li class="s" id="s1">
+              <i><span>1</span></i>
+              ស្ដាប់សំឡេង
+            </li>
+            <li class="s" id="s2">
+              <i><span>2</span></i>
+              បកប្រែ
+            </li>
+            <li class="s" id="s3">
+              <i><span>3</span></i>
+              សំឡេងខ្មែរ
+            </li>
+          </ol>
+
+          <div class="busy" id="busy">
+            <div class="ai-core">
+              <div class="ai-orb">
+                <div class="ai-ring"></div>
+                <div class="ai-center">AI</div>
+              </div>
+            </div>
+            <div class="eq-visualizer">
+              <b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b>
+              <b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b>
+            </div>
+            <div class="bm">
+              <div class="stage-tag">
+                <span class="live-dot"></span>
+                <span id="bstage">AI Dubbing Engine</span>
+              </div>
+              <div class="bt" id="bt">Getting ready</div>
+              <div class="bs" id="bs">Please keep this tab open</div>
+            </div>
+          </div>
+          <p id="studioHint" class="studio-hint" role="status" aria-live="polite"></p>
+          <p id="log" role="status" aria-live="polite">
+          </p>
+          <details class="blog" id="diagnostics">
+            <summary>មើលព័ត៌មានដំណើរការ</summary>
+            <div class="bh">
+              <span>Backend log</span>
+              <button type="button" id="blogclear">
+                Clear
+              </button>
+            </div>
+            <div id="blogbody">
+            </div>
+          </details>
+        </div>
+        <div class="card" id="resCard" hidden="">
+          <p class="step-label"><span>3</span> កែអក្សរ និងទាញយក</p>
+          <h2 id="resultsTitle" tabindex="-1">អត្ថបទខ្មែរ <span id="subtitleCount" class="subtitle-count"></span></h2>
+            <div class="btns result-actions" role="group" aria-label="សំឡេង និងទាញយក">
+              <button class="b" id="genv">🔊 Voice</button>
+              <button class="b" id="replay">▶ ចាក់ឡើងវិញ</button>
+              <button class="b" id="dlaudio">⬇ សំឡេង</button>
+              <button class="b" id="dl">⬇ .srt</button>
+              <button class="b p" id="exp">🎞 ទាញយកវីដេអូខ្មែរ</button>
+            </div>
+          <div class="edit-hint" id="editHint" hidden="">
+            <span>✎ កែអក្សរខ្មែរ ឬប្ដូរ <b>♂ Piseth</b> / <b>♀ Sreymom</b> ក្នុងបន្ទាត់ រួចចុច <b>បង្កើតសំឡេង</b>។</span>
+          </div>
+          <div class="list" id="list">
+          </div>
+          <p class="note" id="voiceNote">
+          </p>
+        </div>
+
+
+      </main>
     </div>
   </div>
   <p class="foot">
@@ -471,13 +479,13 @@ Hello everyone, welcome back.">
       </button>
     </div>
   </div>
-  <div class="mod" id="xmod">
+  <div class="mod" id="xmod" role="dialog" aria-modal="true" aria-labelledby="exportTitle">
     <div class="mbox">
       <div class="big">
         🎉
       </div>
-      <h3>
-        Your Khmer dub is ready!
+      <h3 id="exportTitle">
+        វីដេអូខ្មែររួចរាល់ហើយ!
       </h3>
       <p id="xinfo">
       </p>
@@ -526,39 +534,15 @@ Hello everyone, welcome back.">
       </div>
     </div>
   </div>
-  <div class="toast" id="toast">
+  <nav class="mobile-nav" id="mobileNav" aria-label="ផ្ទាំងការងារ">
+    <button type="button" data-jump="upload" aria-label="ទៅកាន់វីដេអូ">▶ <span>វីដេអូ</span></button>
+    <button type="button" data-jump="setup" aria-label="បើកការកំណត់">⚙ <span>កំណត់</span></button>
+    <button type="button" data-jump="results" disabled aria-label="ទៅកាន់លទ្ធផល">✓ <span>លទ្ធផល</span></button>
+  </nav>
+  <div class="toast" id="toast" role="status" aria-live="polite">
   </div>
   <script src="app.js?v=9c8211a7"></script>
-  <script>
-    /* Layout mode setting (2026-11-15): Auto / Phone / Desktop, saved on this device.
-       Presentation only — does not touch the app logic in app.js. */
-    (function () {
-      var KEY = 'dinmagic_layout';
-      var seg = document.getElementById('layoutSeg');
-      function apply(mode) {
-        var root = document.documentElement;
-        root.classList.remove('layout-phone', 'layout-desktop');
-        if (mode === 'phone') root.classList.add('layout-phone');
-        if (mode === 'desktop') root.classList.add('layout-desktop');
-        if (seg) seg.querySelectorAll('.segbtn').forEach(function (b) {
-          var on = b.dataset.layout === mode;
-          b.classList.toggle('on', on);
-          b.setAttribute('aria-pressed', on ? 'true' : 'false');
-        });
-      }
-      var saved = 'auto';
-      try { saved = localStorage.getItem(KEY) || 'auto'; } catch (e) {}
-      if (saved !== 'auto' && saved !== 'phone' && saved !== 'desktop') saved = 'auto';
-      apply(saved);
-      if (seg) seg.addEventListener('click', function (ev) {
-        var btn = ev.target.closest('.segbtn');
-        if (!btn) return;
-        var mode = btn.dataset.layout || 'auto';
-        try { localStorage.setItem(KEY, mode); } catch (e) {}
-        apply(mode);
-      });
-    })();
-  </script>
+  <script src="android.js?v=20261116b"></script>
 </body>
 
 </html>
