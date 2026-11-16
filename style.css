@@ -110,3 +110,15 @@ html.layout-desktop .cta-split{width:auto}
   .chips::-webkit-scrollbar{display:none}
   .km-ed{font-size:17px}
 }
+
+
+/* === Android workflow order + touch polish (2026-11-16) === */
+/* On tablet and phone, show required setup before the upload workflow.
+   Desktop keeps its existing two-column layout and visual arrangement. */
+@media (max-width:940px){
+  .layout{display:flex;flex-direction:column;gap:0}
+  .layout>aside{order:1;width:100%;min-width:0}
+  .layout>main{order:2;width:100%;min-width:0}
+}
+button,a,.drop,input[type=range],.tsbtn,.gbtn{touch-action:manipulation}
+.layout>main,.layout>aside{min-width:0}
