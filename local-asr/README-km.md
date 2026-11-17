@@ -113,9 +113,17 @@ Local ASR **មិនដឹងភេទអ្នកនិយាយទេ** (Gemi
   (មិនប្រើ PyAV) ដើម្បីចៀសបញ្ហា version របស់ PyAV (`metadata_errors`
   error ដែលជួបពេលសាកលើ Muse)។
 - **Migration (2026-11-17)៖** ទូរស័ព្ទដែលធ្លាប់ save URL ចាស់ `http://127.0.0.1:8001`
-  នឹងត្រូវ app ប្តូរទៅ Cloud server (`https://dinmagic-whisper-cgpozr1p-nakforver.cloady.io`)
+  នឹងត្រូវ app ប្តូរទៅ Cloud server (`https://dinmagic-whisper-q98i15bk-nakforver.cloady.io`)
   ដោយស្វ័យប្រវត្តិម្តងគត់ពេលបើក app — បើចង់ប្រើ localhost វិញ អាចប្តូរ URL ក្នុងប្រអប់បាន
-  (app មិនប្តូរវិញទេ)។ លើសពីនេះ request មាន timeout 30 នាទី ដូច្នេះប៊ូតុងលែងគាំងជារៀងរហូត។
+  (app មិនប្តូរវិញទេ)។ URL Cloud ចាស់ (`...cgpozr1p...`) ក៏ត្រូវប្តូរដោយស្វ័យប្រវត្តិដែរ
+  ព្រោះ server ត្រូវបង្កើតឡើងវិញពេលដាក់ async jobs។
+- **Async jobs (2026-11-17)៖** `POST /transcribe` ឆ្លើយ 202 ជាមួយ job id ភ្លាមៗ
+  រួច app poll `GET /job/<id>` រៀងរាល់ 10 វិនាទី ហើយបង្ហាញ progress
+  (upload % → load model → transcribe %)។ វីដេអូត្រូវកាត់ត្រឹម **60 នាទី** —
+  លើសពីនេះ server បដិសេធជាមួយសារច្បាស់។ សំឡេងត្រូវបកជា chunk 10 នាទីម្ដង
+  ដើម្បីកុំឱ្យពេញ RAM។ ពេលវេលាដែលរំពឹង៖ Cloud (tiny) វីដេអូ 9 នាទី ≈ 18 នាទី
+  (ពេល model ក្តៅហើយ); លើកុំព្យូទ័រ (medium) វីដេអូ 9 នាទី ≈ 10–20 នាទី។
+  Server ចាស់ដែលឆ្លើយ 200 `{"srt": ...}` ផ្ទាល់ នៅប្រើបានដដែល — app ចេះទាំងពីរ។
 - **ទាំង 3 engines រត់តែលើកុំព្យូទ័ររបស់អ្នកទេ (localhost)។**
   នៅលើទូរស័ព្ទ app មិនអាចចូល server ក្នុងកុំព្យូទ័របានទេ — វិធីលើទូរស័ព្ទ
   នៅតែដដែល៖ ផ្ញើវីដេអូ/អូឌីយ៉ូមកឱ្យ Muse transcribe រួចយក .srt ត្រឡប់ទៅវិញ។

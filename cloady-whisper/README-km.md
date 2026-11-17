@@ -5,9 +5,16 @@ Server នេះដាក់លើ Cloady ដើម្បីឱ្យ app dinmag
 
 ## វាធ្វើអ្វី
 
-- `POST /transcribe` — ទទួលវីដេអូ/អូឌីយ៉ូ រួចត្រឡប់ .srt មកវិញ
-  (ដូច `whisper-server.py` ដែរ តែរត់ក្នុង cloud)។
+- `POST /transcribe` — ទទួលវីដេអូ/អូឌីយ៉ូ រួចឆ្លើយ 202 ជាមួយ job id
+  ភ្លាមៗ (`{"job": "<id>", "status": "queued"}`) រួច transcribe នៅខាងក្រោយ។
+- `GET /job/<id>` — ពិនិត្យ progress (`queued → loading → processing →
+  done/error`, `progress` 0–100) រួចយក .srt ពេលរួច។
 - `GET /healthz` — ពិនិត្យថា server រត់ឬអត់។
+
+App upload ដោយបង្ហាញ % ហើយ poll job រៀងរាល់ 10 វិនាទី ដូច្នេះប៊ូតុង
+លែងគាំងពេល upload/transcribe វីដេអូធំៗ។ វីដេអូត្រូវកាត់ត្រឹម
+**60 នាទី** — លើសពីនេះ server បដិសេធជាមួយសារច្បាស់។ សំឡេងត្រូវបកជា
+chunk 10 នាទីម្ដង ដើម្បីកុំឱ្យពេញ RAM 0.5 GB។
 
 ## ហេតុអ្វីបានជា Whisper tiny?
 
@@ -31,7 +38,8 @@ Tiny ជា model តែមួយគត់ដែលចុះពិតប្រ�
 transcribe លើកដំបូង 35 វិនាទី ចំណាយ 3m15s (load model ~2 នាទី +
 inference ~1 នាទី); ពេល model ក្តៅហើយ ~2× realtime + ~15 វិនាទី
 overhead (ឃ្លា 3 វិនាទី ចំណាយ 22 វិនាទី)។ វីដេអូ 9 នាទីត្រូវការ
-~18 នាទី — request តែមួយអាច timeout លើវីដេអូវែងៗ។ **EU1 ប្រើ
+~18 នាទី — តែឥឡូវជា async job (upload → poll) ដូច្នេះលែងមានបញ្ហា
+request timeout ហើយ app បង្ហាញ progress ជាប់រហូត។ **EU1 ប្រើ
 មិនកើតទេ** (host ខ្វះ CPU៖ load model 5–10+ នាទី, ~7× realtime)
 — ត្រូវប្រើ JPN1។
 
@@ -45,7 +53,7 @@ Cloady ជាប់គាំង)។ ប៉ុន្តែ load model ចូល m
 ## របៀបប្រើក្នុង app
 
 នៅក្នុង app → tab Subtitles → URL របស់ server ត្រូវបានដាក់ជា default
-(https://dinmagic-whisper-cgpozr1p-nakforver.cloady.io — JPN1) រួចជ្រើស
+(https://dinmagic-whisper-q98i15bk-nakforver.cloady.io — JPN1) រួចជ្រើស
 Whisper → Transcribe → បន្ទាប់មកជ្រើស **Translate Only → Dub** ដើម្បីឱ្យ
 Gemini បកប្រែជាខ្មែរ។ URL នៅតែកែបាន — បើចង់ប្រើ server លើកុំព្យូទ័រវិញ
 សូមដាក់ `http://127.0.0.1:8001` មកវិញ។

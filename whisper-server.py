@@ -19,13 +19,36 @@ sent to Gemini, so Gemini quota is saved.
 Endpoints:
   GET  /healthz     -> {"ok": true, "service": "whisper-transcribe",
                         "model": ..., "engines": ["whisper","sensevoice","qwen3"],
-                        "qwen_model": ...}
+                        "qwen_model": ..., "max_minutes": 60}
   POST /transcribe  -> body: raw media bytes (the video/audio file itself)
                        headers: X-Filename (original name, optional),
                                 X-Language (e.g. zh, en, ko; empty = auto),
                                 X-Engine (whisper | sensevoice | qwen3;
                                           default: whisper)
-                       -> {"srt": "...", "language": "zh", "cues": 42}
+                       -> 202 {"job": "<id>", "status": "queued"}
+                       (the upload is saved and transcribed in the
+                       background — poll GET /job/<id> instead of
+                       waiting on one long request)
+  GET  /job/<id>    -> {"status": "queued|loading|processing|done|error",
+                        "progress": 0-100, "srt": "...", "cues": 42,
+                        "language": "zh", "error": ""}
+                       Jobs are kept for 2 hours, then deleted.
+
+Why async jobs?
+  A large video upload plus transcription takes far longer than any
+  browser/proxy request timeout (a 9-minute video is ~10-20 min with
+  the medium model). The old single-request POST froze the app's
+  button for the whole time. Now the upload returns immediately with
+  a job id and the app polls for progress.
+
+Why chunked transcription?
+  Audio is decoded and transcribed in ~10-minute chunks
+  (TRANSCRIBE_CHUNK_S, default 600 s) and the SRT cues are merged
+  with offset timestamps — a whole long file is never decoded into
+  one numpy array (2 h of 16 kHz float32 is ~460 MB). Maximum audio
+  length is 60 minutes (MAX_AUDIO_MINUTES) — longer uploads are
+  refused with a clear error naming the limit instead of running
+  out of memory.
 
 Notes:
   - Requires ffmpeg in PATH, plus the package for whichever engine you
@@ -41,15 +64,22 @@ Notes:
     minutes with the medium model. SenseVoice is much faster on CPU.
     Qwen3-ASR transcribes in 30-second chunks (it returns no
     timestamps, so cues are time slices of each chunk).
+  - Only ONE job runs at a time (a FIFO queue + single worker thread):
+    parallel transcriptions on one CPU would only slow each other
+    down. Extra uploads wait in "queued" status.
 """
 import argparse
 import json
+import math
 import os
+import queue
 import re
 import subprocess
 import sys
 import tempfile
+import threading
 import time
+import uuid
 import wave
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
@@ -58,6 +88,13 @@ import numpy as np
 WHISPER_MODEL = "medium"
 QWEN_MODEL = "Qwen/Qwen3-ASR-0.6B-hf"
 QWEN_CHUNK = 30  # seconds of audio per Qwen3-ASR generate call
+# Audio is transcribed in chunks of this many seconds (default 10 min);
+# override for tests (e.g. TRANSCRIBE_CHUNK_S=30). One chunk of mono
+# 16 kHz float32 is ~38 MB at 600 s.
+CHUNK_S = int(os.environ.get("TRANSCRIBE_CHUNK_S", "600"))
+MAX_AUDIO_MINUTES = 60
+MAX_AUDIO_S = MAX_AUDIO_MINUTES * 60
+JOB_TTL_S = 2 * 3600  # finished jobs (and their SRT) are kept 2 hours
 
 ENGINES = ("whisper", "sensevoice", "qwen3")
 ENGINE_INSTALL = {
@@ -68,10 +105,97 @@ ENGINE_INSTALL = {
 
 _models = {}  # engine name -> loaded model object(s)
 
+# ---------------------------------------------------------------- jobs
+
+_jobs = {}  # job id -> dict(status, progress, srt, cues, language, error, ...)
+_jobs_lock = threading.Lock()
+_job_queue = queue.Queue()
+_worker_started = False
+
 
 def log(msg):
     print(f"[{time.strftime('%H:%M:%S')}] {msg}", flush=True)
 
+
+def _unlink(path):
+    if path:
+        try:
+            os.unlink(path)
+        except OSError:
+            pass
+
+
+def _purge_old_jobs():
+    """Drop finished jobs older than JOB_TTL_S (and their temp files)."""
+    now = time.time()
+    with _jobs_lock:
+        stale = [jid for jid, j in _jobs.items()
+                 if j["status"] in ("done", "error")
+                 and now - j["created"] > JOB_TTL_S]
+        for jid in stale:
+            _unlink(_jobs.pop(jid).get("path"))
+
+
+def _set_job(jid, **kw):
+    with _jobs_lock:
+        job = _jobs.get(jid)
+        if job is not None:
+            job.update(kw)
+
+
+def _get_job(jid):
+    with _jobs_lock:
+        job = _jobs.get(jid)
+        return dict(job) if job is not None else None
+
+
+def _job_public(job):
+    return {"status": job["status"], "progress": job["progress"],
+            "srt": job["srt"], "cues": job["cues"],
+            "language": job["language"], "error": job["error"]}
+
+
+def _ensure_worker():
+    global _worker_started
+    if not _worker_started:
+        threading.Thread(target=_worker, daemon=True).start()
+        _worker_started = True
+
+
+def _worker():
+    while True:
+        jid = _job_queue.get()
+        try:
+            _run_job(jid)
+        except Exception as exc:  # noqa: BLE001 - a failed job must not kill the worker
+            log(f"job {jid} ERROR: {exc}")
+            _set_job(jid, status="error", error=str(exc), progress=0)
+        finally:
+            _job_queue.task_done()
+
+
+def _run_job(jid):
+    job = _get_job(jid)
+    if job is None:
+        return
+    path, language, engine = (job["path"], job["language_req"],
+                              job["engine"])
+    try:
+        _set_job(jid, status="loading", progress=5)
+        srt, detected, n = transcribe_file(
+            path, language, engine,
+            lambda frac: _set_job(
+                jid, status="processing",
+                progress=20 + int(75 * max(0.0, min(1.0, frac or 0.0)))))
+        _set_job(jid, status="done", progress=100, srt=srt, cues=n,
+                 language=detected)
+        log(f"job {jid} done: {n} cues, language={detected}, "
+            f"engine={engine}")
+    finally:
+        _unlink(path)
+
+
+# ---------------------------------------------------------------- audio
 
 def fmt(t):
     h = int(t // 3600)
@@ -84,15 +208,65 @@ def fmt(t):
     return f"{h:02d}:{m:02d}:{s:02d},{ms:03d}"
 
 
-def load_audio_16k(path):
-    """Decode any audio/video file to mono 16 kHz float32 samples via ffmpeg."""
-    cmd = ["ffmpeg", "-v", "error", "-i", path,
-           "-vn", "-ac", "1", "-ar", "16000", "-f", "f32le", "-"]
+def probe_duration(path):
+    """Total audio duration in seconds via `ffmpeg -i`, or None if unknown."""
+    try:
+        proc = subprocess.run(["ffmpeg", "-i", path],
+                              capture_output=True, text=True, timeout=120)
+        m = re.search(r"Duration: (\d+):(\d+):([\d.]+)",
+                      proc.stderr or "")
+        if not m:
+            return None
+        return (int(m.group(1)) * 3600 + int(m.group(2)) * 60
+                + float(m.group(3)))
+    except Exception:
+        return None
+
+
+def decode_range(path, start, length):
+    """Decode [start, start+length) to mono 16 kHz float32 samples.
+
+    -ss before -i seeks fast; for audio this is accurate to a few ms,
+    which is fine for SRT cue boundaries.
+    """
+    cmd = ["ffmpeg", "-v", "error", "-ss", str(start), "-t", str(length),
+           "-i", path, "-vn", "-ac", "1", "-ar", "16000", "-f", "f32le", "-"]
     raw = subprocess.check_output(cmd)
-    audio = np.frombuffer(raw, dtype=np.float32)
-    if audio.size == 0:
-        raise ValueError("no audio found in the uploaded file")
-    return audio
+    return np.frombuffer(raw, dtype=np.float32)
+
+
+def iter_audio_chunks(path, duration=None):
+    """Yield (start_s, float32 mono 16 kHz samples) per CHUNK_S seconds.
+
+    Only one chunk (~38 MB at 600 s) is ever in memory, so a 60-minute
+    file never blows up RAM. When the duration is unknown the loop
+    decodes until EOF.
+    """
+    if duration is None:
+        duration = probe_duration(path)
+    if duration is not None:
+        n = max(1, int(math.ceil(duration / CHUNK_S)))
+        for i in range(n):
+            start = i * CHUNK_S
+            length = min(CHUNK_S, duration - start)
+            if length <= 0:
+                break
+            yield start, decode_range(path, start, length)
+    else:
+        start = 0.0
+        while True:
+            audio = decode_range(path, start, CHUNK_S)
+            if audio.size == 0:
+                break
+            yield start, audio
+            start += CHUNK_S
+
+
+def _check_max(processed):
+    if processed > MAX_AUDIO_S:
+        raise ValueError(
+            f"audio លើស {MAX_AUDIO_MINUTES} នាទី — សូមកាត់វីដេអូឱ្យខ្លីជាង "
+            f"{MAX_AUDIO_MINUTES} នាទី (audio over {MAX_AUDIO_MINUTES} min)")
 
 
 def write_wav_16k(path, audio):
@@ -188,20 +362,39 @@ def get_whisper():
     return _models["whisper"]
 
 
-def transcribe_whisper(path, language):
+def transcribe_whisper(path, language, progress_cb=None):
+    """Transcribe in CHUNK_S pieces, merging cues with offset timestamps.
+
+    progress_cb(frac) is called after each chunk with the fraction of
+    the audio processed so far. The language detected on the first
+    chunk is reused for later chunks so one clip never flips language
+    mid-way.
+    """
     model = get_whisper()
-    audio = load_audio_16k(path)
+    duration = probe_duration(path)
     lang = language or None  # None = auto-detect
-    segments, info = model.transcribe(audio, language=lang, vad_filter=True)
-    lines = []
-    n = 0
-    for i, seg in enumerate(segments, 1):
-        text = seg.text.strip()
-        if not text:
+    detected = None
+    cues = []
+    processed = 0.0
+    for start, audio in iter_audio_chunks(path, duration):
+        if audio.size == 0:
             continue
-        lines.append(f"{i}\n{fmt(seg.start)} --> {fmt(seg.end)}\n{text}\n")
-        n += 1
-    return "\n".join(lines), info.language, n
+        segments, info = model.transcribe(audio, language=lang or detected,
+                                          vad_filter=True)
+        if detected is None:
+            detected = info.language
+        for seg in segments:
+            text = seg.text.strip()
+            if text:
+                cues.append((start + seg.start, start + seg.end, text))
+        processed = start + len(audio) / 16000.0
+        _check_max(processed)
+        if progress_cb is not None:
+            progress_cb(processed / duration if duration else None)
+    srt, n = srt_from_cues(cues)
+    if n == 0:
+        raise ValueError("no speech found in the uploaded file")
+    return srt, detected or language or "zh", n
 
 
 def get_sensevoice():
@@ -219,29 +412,37 @@ def get_sensevoice():
     return _models["sensevoice"]
 
 
-def transcribe_sensevoice(path, language):
+def transcribe_sensevoice(path, language, progress_cb=None):
+    """SenseVoice in CHUNK_S pieces, merging cues with offset timestamps."""
     model = get_sensevoice()
-    audio = load_audio_16k(path)
-    duration = len(audio) / 16000.0
+    duration = probe_duration(path)
     lang = language or "auto"
-    tmp = tempfile.NamedTemporaryFile(delete=False, suffix=".wav")
-    try:
-        tmp.close()
-        write_wav_16k(tmp.name, audio)
-        res = model.generate(input=tmp.name, cache={}, language=lang,
-                             use_itn=True, batch_size_s=60, merge_vad=True)
-    finally:
+    cues = []
+    processed = 0.0
+    for start, audio in iter_audio_chunks(path, duration):
+        if audio.size == 0:
+            continue
+        tmp = tempfile.NamedTemporaryFile(delete=False, suffix=".wav")
         try:
-            os.unlink(tmp.name)
-        except OSError:
-            pass
-    item = res[0]
-    text = (item.get("text") or "").strip()
-    stamps = item.get("timestamp") or []
-    sentences = split_sentences(text)
-    cues = cues_from_timestamps(stamps, sentences)
-    if not cues and text:
-        cues = cues_from_text(text, 0.0, duration)
+            tmp.close()
+            write_wav_16k(tmp.name, audio)
+            res = model.generate(input=tmp.name, cache={}, language=lang,
+                                 use_itn=True, batch_size_s=60, merge_vad=True)
+        finally:
+            _unlink(tmp.name)
+        item = res[0]
+        text = (item.get("text") or "").strip()
+        stamps = item.get("timestamp") or []
+        sentences = split_sentences(text)
+        chunk_cues = cues_from_timestamps(stamps, sentences)
+        if not chunk_cues and text:
+            chunk_cues = cues_from_text(text, 0.0, len(audio) / 16000.0)
+        cues.extend((st + start, en + start, t)
+                    for st, en, t in chunk_cues)
+        processed = start + len(audio) / 16000.0
+        _check_max(processed)
+        if progress_cb is not None:
+            progress_cb(processed / duration if duration else None)
     srt, n = srt_from_cues(cues)
     return srt, language or "zh", n
 
@@ -279,58 +480,65 @@ def get_qwen3():
     return _models["qwen3"]
 
 
-def transcribe_qwen3(path, language):
+def transcribe_qwen3(path, language, progress_cb=None):
+    """Qwen3-ASR in CHUNK_S pieces (each split into 30 s slices as
+    before), merging cues with offset timestamps."""
     processor, model, torch = get_qwen3()
-    audio = load_audio_16k(path)
-    duration = len(audio) / 16000.0
+    duration = probe_duration(path)
     lang = language or None  # None = auto-detect
     detected = lang or "zh"
     cues = []
-    chunk_s = QWEN_CHUNK
-    n_chunks = max(1, int((duration + chunk_s - 1) // chunk_s))
-    for ci in range(n_chunks):
-        start = ci * chunk_s
-        end = min(duration, start + chunk_s)
-        seg = audio[int(start * 16000):int(end * 16000)]
-        if seg.size == 0:
+    processed = 0.0
+    for chunk_start, audio in iter_audio_chunks(path, duration):
+        if audio.size == 0:
             continue
-        tmp = tempfile.NamedTemporaryFile(delete=False, suffix=".wav")
-        try:
-            tmp.close()
-            write_wav_16k(tmp.name, seg)
-            kwargs = {"audio": tmp.name}
-            if lang:
-                kwargs["language"] = lang
-            inputs = processor.apply_transcription_request(**kwargs)
-            inputs = inputs.to(model.device, model.dtype)
-            with torch.inference_mode():
-                output_ids = model.generate(**inputs, max_new_tokens=1024)
-        finally:
+        chunk_dur = len(audio) / 16000.0
+        n_slices = max(1, int(math.ceil(chunk_dur / QWEN_CHUNK)))
+        for si in range(n_slices):
+            s0 = si * QWEN_CHUNK
+            s1 = min(chunk_dur, s0 + QWEN_CHUNK)
+            seg = audio[int(s0 * 16000):int(s1 * 16000)]
+            if seg.size == 0:
+                continue
+            tmp = tempfile.NamedTemporaryFile(delete=False, suffix=".wav")
             try:
-                os.unlink(tmp.name)
-            except OSError:
-                pass
-        generated_ids = output_ids[:, inputs["input_ids"].shape[1]:]
-        parsed = processor.decode(generated_ids,
-                                  return_format="parsed")[0]
-        text = (parsed.get("transcription") or "").strip()
-        if parsed.get("language"):
-            detected = _QWEN_LANG_NAMES.get(parsed["language"],
-                                            parsed["language"])
-        if not text:
-            continue
-        cues.extend(cues_from_text(text, start, end))
+                tmp.close()
+                write_wav_16k(tmp.name, seg)
+                kwargs = {"audio": tmp.name}
+                if lang:
+                    kwargs["language"] = lang
+                inputs = processor.apply_transcription_request(**kwargs)
+                inputs = inputs.to(model.device, model.dtype)
+                with torch.inference_mode():
+                    output_ids = model.generate(**inputs, max_new_tokens=1024)
+            finally:
+                _unlink(tmp.name)
+            generated_ids = output_ids[:, inputs["input_ids"].shape[1]:]
+            parsed = processor.decode(generated_ids,
+                                      return_format="parsed")[0]
+            text = (parsed.get("transcription") or "").strip()
+            if parsed.get("language"):
+                detected = _QWEN_LANG_NAMES.get(parsed["language"],
+                                                parsed["language"])
+            if not text:
+                continue
+            cues.extend(cues_from_text(text, chunk_start + s0,
+                                       chunk_start + s1))
+        processed = chunk_start + chunk_dur
+        _check_max(processed)
+        if progress_cb is not None:
+            progress_cb(processed / duration if duration else None)
     srt, n = srt_from_cues(cues)
     return srt, detected, n
 
 
-def transcribe_file(path, language, engine):
+def transcribe_file(path, language, engine, progress_cb=None):
     if engine == "whisper":
-        return transcribe_whisper(path, language)
+        return transcribe_whisper(path, language, progress_cb)
     if engine == "sensevoice":
-        return transcribe_sensevoice(path, language)
+        return transcribe_sensevoice(path, language, progress_cb)
     if engine == "qwen3":
-        return transcribe_qwen3(path, language)
+        return transcribe_qwen3(path, language, progress_cb)
     raise ValueError(f"unknown engine: {engine}")
 
 
@@ -364,15 +572,27 @@ class Handler(BaseHTTPRequestHandler):
         self.end_headers()
 
     def do_GET(self):
+        _purge_old_jobs()
         if self.path in ("/", "/healthz"):
             self._json(200, {"ok": True, "service": "whisper-transcribe",
                              "model": WHISPER_MODEL,
                              "engines": list(ENGINES),
-                             "qwen_model": QWEN_MODEL})
-        else:
-            self._json(404, {"error": "not found"})
+                             "qwen_model": QWEN_MODEL,
+                             "max_minutes": MAX_AUDIO_MINUTES})
+            return
+        m = re.match(r"^/job/([A-Za-z0-9_-]+)$", self.path.split("?")[0])
+        if m:
+            job = _get_job(m.group(1))
+            if job is None:
+                self._json(404, {"error": "job not found or expired — "
+                                          "please transcribe again"})
+            else:
+                self._json(200, _job_public(job))
+            return
+        self._json(404, {"error": "not found"})
 
     def do_POST(self):
+        _purge_old_jobs()
         if self.path != "/transcribe":
             self._json(404, {"error": "not found"})
             return
@@ -385,27 +605,64 @@ class Handler(BaseHTTPRequestHandler):
             self._json(400, {"error": f"unknown engine '{engine}' "
                                       f"(whisper/sensevoice/qwen3)"})
             return
-        data = self.rfile.read(length)
         filename = self.headers.get("X-Filename") or "upload.mp4"
         language = (self.headers.get("X-Language") or "zh").strip()
         suffix = os.path.splitext(filename)[1] or ".mp4"
+        job_id = None  # set once a job owns the temp file (below)
+        # Stream the upload straight to disk in 1 MB pieces — a large
+        # video must never sit whole in RAM.
         tmp = tempfile.NamedTemporaryFile(delete=False, suffix=suffix)
         try:
-            tmp.write(data)
+            remaining = length
+            while remaining > 0:
+                chunk = self.rfile.read(min(1 << 20, remaining))
+                if not chunk:
+                    break
+                tmp.write(chunk)
+                remaining -= len(chunk)
             tmp.close()
-            log(f"Transcribing {filename} ({length / 1e6:.1f} MB, "
-                f"lang={language or 'auto'}, engine={engine}) ...")
-            srt, detected, n = transcribe_file(tmp.name, language, engine)
-            log(f"Done: {n} cues, language={detected}, engine={engine}")
-            self._json(200, {"srt": srt, "language": detected, "cues": n})
+            if remaining > 0:
+                self._json(400, {"error": "upload incomplete — "
+                                          "please try again"})
+                return
+            duration = probe_duration(tmp.name)
+            if duration is not None and duration > MAX_AUDIO_S:
+                log(f"Refused {filename}: {duration / 60:.1f} min "
+                    f"(max {MAX_AUDIO_MINUTES} min)")
+                self._json(400, {"error":
+                                 f"វីដេអូនេះ {duration / 60:.1f} នាទី — "
+                                 f"លើសកម្រិត {MAX_AUDIO_MINUTES} នាទី។ "
+                                 f"សូមកាត់វីដេអូឱ្យខ្លីជាង "
+                                 f"{MAX_AUDIO_MINUTES} នាទី "
+                                 f"(video is {duration / 60:.1f} min, "
+                                 f"max is {MAX_AUDIO_MINUTES} min)"})
+                return
+            job_id = uuid.uuid4().hex[:16]
+            with _jobs_lock:
+                _jobs[job_id] = {"status": "queued", "progress": 0,
+                                 "srt": "", "cues": 0, "language": "",
+                                 "error": "", "path": tmp.name,
+                                 "language_req": language,
+                                 "engine": engine,
+                                 "created": time.time()}
+            _ensure_worker()
+            _job_queue.put(job_id)
+            log(f"Job {job_id} queued: {filename} ({length / 1e6:.1f} MB, "
+                f"lang={language or 'auto'}, engine={engine}, "
+                f"duration={'?' if duration is None else f'{duration:.0f}s'})")
+            self._json(202, {"job": job_id, "status": "queued"})
         except Exception as exc:  # noqa: BLE001 - report any failure to the app
             log(f"ERROR: {exc}")
-            self._json(500, {"error": str(exc)})
-        finally:
             try:
-                os.unlink(tmp.name)
-            except OSError:
+                self._json(500, {"error": str(exc)})
+            except Exception:
                 pass
+        finally:
+            # Until a job owns the temp file, remove it here on every
+            # error/early-return path; jobs delete their own file
+            # when they finish.
+            if job_id is None:
+                _unlink(tmp.name)
 
 
 def main():
@@ -428,7 +685,8 @@ def main():
     QWEN_CHUNK = args.qwen_chunk
     server = ThreadingHTTPServer((args.host, args.port), Handler)
     log(f"Local transcription server listening on "
-        f"http://{args.host}:{args.port}")
+        f"http://{args.host}:{args.port} "
+        f"(max {MAX_AUDIO_MINUTES} min, chunk {CHUNK_S}s)")
     log("Engines load on first use: whisper (pip install faster-whisper), "
         "sensevoice (pip install funasr), "
         'qwen3 (pip install "transformers>=5.13.0" torch).')
