@@ -112,6 +112,10 @@ Local ASR **មិនដឹងភេទអ្នកនិយាយទេ** (Gemi
 - `transcribe.py` និង `whisper-server.py` decode សំឡេងដោយ `ffmpeg` ផ្ទាល់
   (មិនប្រើ PyAV) ដើម្បីចៀសបញ្ហា version របស់ PyAV (`metadata_errors`
   error ដែលជួបពេលសាកលើ Muse)។
+- **Migration (2026-11-17)៖** ទូរស័ព្ទដែលធ្លាប់ save URL ចាស់ `http://127.0.0.1:8001`
+  នឹងត្រូវ app ប្តូរទៅ Cloud server (`https://dinmagic-whisper-cgpozr1p-nakforver.cloady.io`)
+  ដោយស្វ័យប្រវត្តិម្តងគត់ពេលបើក app — បើចង់ប្រើ localhost វិញ អាចប្តូរ URL ក្នុងប្រអប់បាន
+  (app មិនប្តូរវិញទេ)។ លើសពីនេះ request មាន timeout 30 នាទី ដូច្នេះប៊ូតុងលែងគាំងជារៀងរហូត។
 - **ទាំង 3 engines រត់តែលើកុំព្យូទ័ររបស់អ្នកទេ (localhost)។**
   នៅលើទូរស័ព្ទ app មិនអាចចូល server ក្នុងកុំព្យូទ័របានទេ — វិធីលើទូរស័ព្ទ
   នៅតែដដែល៖ ផ្ញើវីដេអូ/អូឌីយ៉ូមកឱ្យ Muse transcribe រួចយក .srt ត្រឡប់ទៅវិញ។
