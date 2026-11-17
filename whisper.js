@@ -1,10 +1,14 @@
-// Whisper / SenseVoice / Qwen3-ASR transcript via a local whisper-server.py
+// Whisper / SenseVoice / Qwen3-ASR transcript via a transcription server
 // — dinmagicdubbing.
-// Sends the loaded video to the local transcription server and fills
-// #srtText with the transcript (.srt). The app's Translate Only mode then
+// Sends the loaded video to the transcription server and fills #srtText
+// with the transcript (.srt). The app's Translate Only mode then
 // translates it to Khmer with Gemini, so no audio is ever sent to Gemini.
-// The server must run on the same computer as this page is opened on
-// (default http://127.0.0.1:8001). See whisper-server.py.
+// Default server is the free cloud server on Cloady (JPN1, Whisper tiny)
+// so the phone can transcribe too; the URL field stays editable — put
+// http://127.0.0.1:8001 there to use whisper-server.py (medium) on your
+// own computer instead, which is faster and more accurate.
+// SenseVoice / Qwen3-ASR only exist on the local server; the cloud
+// server answers 400 for those engines.
 (function () {
   'use strict';
   var KEY = 'dinmagic_whisper_url';
@@ -59,7 +63,7 @@
     try { localStorage.setItem(KEY, base); } catch (e) {}
     btn.disabled = true;
     setStatus('កំពុង transcribe ជាមួយ ' + engineLabel() +
-      '… អាចត្រូវការពេលខ្លះ (វីដេអូ 9 នាទី ≈ 10–20 នាទីជាមួយ Whisper)។');
+      '… អាចត្រូវការពេលខ្លះ (លើ Cloud វីដេអូ 9 នាទី ≈ 18 នាទី; លើកដំបូងត្រូវ load model ~2 នាទី)។');
     try {
       var res = await fetch(base + '/transcribe', {
         method: 'POST',
@@ -80,8 +84,8 @@
       setStatus('បាន transcript ' + data.cues + ' បន្ទាត់ (' + (data.language || '') +
         ', ' + engineLabel() + ') — ជ្រើស Translate Only រួចចុច Dub។');
     } catch (err) {
-      setStatus('មិនអាចភ្ជាប់ទៅ local server បានទេ៖ ' + err.message +
-        ' — សូមដំណើរការ whisper-server.py លើកុំព្យូទ័រ។');
+      setStatus('មិនអាចភ្ជាប់ទៅ server បានទេ៖ ' + err.message +
+        ' — សូមពិនិត្យ URL ខាងលើ ឬដំណើរការ whisper-server.py លើកុំព្យូទ័រ។');
     } finally {
       btn.disabled = false;
     }

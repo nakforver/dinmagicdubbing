@@ -327,9 +327,9 @@ gemini-2.0-flash-exp</textarea>
               ជម្រើសនេះរំលងការស្ដាប់ និងបកប្រែ ហើយបង្កើតសំឡេងតាមអត្ថបទរបស់អ្នក។
             </p>
             <div id="whisperBox" style="margin-bottom:12px">
-              <label class="f" for="whisperUrl">🎙️ Transcript ក្នុងម៉ាស៊ីនខ្លួនឯង — មិនប្រើ Gemini</label>
+              <label class="f" for="whisperUrl">🎙️ Transcript — មិនប្រើ Gemini (Cloud ឥតគិតថ្លៃ ឬ ក្នុងម៉ាស៊ីនខ្លួនឯង)</label>
               <div style="display:flex;gap:8px;margin-top:6px">
-                <input id="whisperUrl" type="text" value="http://127.0.0.1:8001" spellcheck="false" style="flex:1" />
+                <input id="whisperUrl" type="text" value="https://dinmagic-whisper-cgpozr1p-nakforver.cloady.io" spellcheck="false" style="flex:1" />
                 <select id="whisperLang" style="width:110px">
                   <option value="zh" selected="">ចិន</option>
                   <option value="en">អង់គ្លេស</option>
@@ -341,16 +341,16 @@ gemini-2.0-flash-exp</textarea>
               <div style="display:flex;gap:8px;align-items:center;margin-top:6px">
                 <label class="f" for="whisperEngine" style="margin:0">ម៉ាស៊ីនបកសំឡេង៖</label>
                 <select id="whisperEngine" style="flex:1">
-                  <option value="whisper" selected="">Whisper (medium)</option>
+                  <option value="whisper" selected="">Whisper</option>
                   <option value="sensevoice">SenseVoice (លឿនបំផុត)</option>
                   <option value="qwen3">Qwen3-ASR (ត្រឹមត្រូវបំផុត)</option>
                 </select>
               </div>
               <div style="display:flex;gap:10px;align-items:center;margin-top:8px">
                 <button class="b" id="whisperBtn" type="button">🎙️ Transcribe with Whisper</button>
-                <span class="note" id="whisperStatus" style="margin:0">ត្រូវការ whisper-server.py ដំណើរការលើកុំព្យូទ័រ។</span>
+                <span class="note" id="whisperStatus" style="margin:0">លំនាំដើម៖ server ឥតគិតថ្លៃនៅលើ Cloud (Whisper tiny — យឺត)។ បើចង់លឿន/ត្រឹមត្រូវជាង ដំណើរការ whisper-server.py លើកុំព្យូទ័រ ហើយប្ដូរ URL ខាងលើ។</span>
               </div>
-              <p class="note">ផ្ញើវីដេអូទៅ local server ក្នុងម៉ាស៊ីនរបស់អ្នក រួចបំពេញអត្ថបទខាងក្រោមដោយស្វ័យប្រវត្តិ។ បន្ទាប់មកជ្រើស Translate Only ដើម្បីឱ្យ Gemini បកប្រែជាខ្មែរ។</p>
+              <p class="note">ផ្ញើវីដេអូទៅ server (លំនាំដើម Cloud — ប្រើបានពីទូរស័ព្ទ) រួចបំពេញអត្ថបទខាងក្រោមដោយស្វ័យប្រវត្តិ។ បន្ទាប់មកជ្រើស Translate Only ដើម្បីឱ្យ Gemini បកប្រែជាខ្មែរ។</p>
             </div>
             <input type="file" id="srt" accept=".srt,.vtt,.txt" style="font-size:13px" />
             <textarea id="srtText" style="min-height:150px;margin-top:10px" placeholder="1
@@ -569,7 +569,7 @@ gemini-2.0-flash-exp</textarea>
   </div>
   <script src="app.js?v=9c8211a7"></script>
   <script src="android.js?v=20261116b"></script>
-  <script src="whisper.js?v=20261117a"></script>
+  <script src="whisper.js?v=20261117b"></script>
 </body>
 
 </html>
