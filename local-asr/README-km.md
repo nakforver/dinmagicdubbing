@@ -2,26 +2,47 @@
 
 ## ចម្លើយខ្លី
 
-**បាន — តែមិនមែនក្នុង app ផ្ទាល់ទេ។** `app.js` របស់ dinmagicdubbing ជា
-encrypted bundle កែមិនបាន ដូច្នេះបន្ថែម local ASR ចូល app មិនកើត។
-វិធីដែលធ្វើបានគឺ **2 ជំហាន**៖
+**បាន។** `app.js` របស់ dinmagicdubbing ជា encrypted bundle កែមិនបាន
+តែ app មានប៊ូតុង transcript ក្នុងផ្ទាំង **Subtitles** ដែលភ្ជាប់ទៅ
+local server (`whisper-server.py`) លើកុំព្យូទ័ររបស់អ្នក។
+Server នោះរត់បាន **3 engines** — ជ្រើសក្នុង app បាន៖
 
 ```
-វីដេអូ → [Local ASR ក្នុងកុំព្យូទ័រ] → .srt (ភាសាដើម, ដូចជាចិន)
-        → បញ្ចូល .srt ចូល app (ផ្ទាំង Subtitles) → Translate Only
+វីដេអូ → [Local ASR ក្នុងកុំព្យូទ័រ: Whisper / SenseVoice / Qwen3-ASR]
+        → .srt (ភាសាដើម, ដូចជាចិន)
+        → app បំពេញអត្ថបទដោយស្វ័យប្រវត្តិ → Translate Only
         → Gemini បកប្រែជាខ្មែរ → Export
 ```
 
 មានន័យថា local ASR **ជំនួសតែជំហាន transcribe** ប៉ុណ្ណោះ។
 ការបកប្រែជាខ្មែរនៅតែប្រើ Gemini ក្នុង app ដដែល (ត្រូវការ Gemini key)។
+សំឡេងមិនដែលផ្ញើទៅ Gemini ទេ ដូច្នេះសន្សំ quota បានច្រើន។
 
-## ប្រៀបធៀប 3 models
+## វិធីប្រើក្នុង app (ងាយបំផុត)
 
-| Model | ចំណុចខ្លាំង | ចំណុចខ្សោយ | សាកសម |
+```bash
+# ដំឡើង package សម្រាប់ engine ដែលអ្នកចង់ប្រើ (យ៉ាងហោចមួយ)៖
+pip install faster-whisper            # Whisper
+pip install funasr                    # SenseVoice
+pip install "transformers>=5.13.0" torch   # Qwen3-ASR
+
+# ដំណើរការ server (ពី folder ដែលមាន whisper-server.py)៖
+python3 whisper-server.py
+```
+
+រួចបើក app → ផ្ទាំង **Subtitles** → ជ្រើស engine
+(Whisper / SenseVoice / Qwen3-ASR) → ចុច **Transcribe** →
+បន្ទាប់មកជ្រើស **Translate Only** → ចុច Dub។
+Server ផ្ទុក model នីមួយៗនៅពេលប្រើលើកដំបូងប៉ុណ្ណោះ
+(មិនផ្ទុកទាំង 3 ក្នុងពេលតែមួយទេ)។
+
+## ប្រៀបធៀប 3 engines
+
+| Engine | ចំណុចខ្លាំង | ចំណុចខ្សោយ | សាកសម |
 |---|---|---|---|
 | **Whisper** (`faster-whisper`, script `transcribe.py`) | ងាយដំឡើងបំផុត, ចិនល្អ, ដំណើរការលើ CPU បាន, មាន timestamps ត្រឹមត្រូវ | `large-v3` យឺតលើ CPU (ប្រើ `medium` បើ CPU ខ្សោយ) | **ជម្រើសដំបូងដែលណែនាំ** |
-| **SenseVoice** (`FunASR`, script `transcribe_sensevoice.py`) | លឿនបំផុតលើ CPU, ចិនល្អណាស់ (Alibaba, ធ្វើសម្រាប់ចិន/អង់គ្លេស) | ដំឡើងធ្ងន់ជាងបន្តិច (FunASR + models) | វីដេអូយូរ, ចង់បានលឿន |
-| **Qwen3-ASR** (`Qwen/Qwen3-ASR-0.6B`) | ថ្មីបំផុត (2025), ចិនត្រឹមត្រូវណាស់, មាន timestamps, ស្គាល់ភាសា 30+ | ត្រូវការ RAM/GPU ច្រើនជាង (0.6B ប្រហែល 4GB RAM, 1.7B ត្រូវ GPU) | បើមាន GPU ឬចង់បានភាពត្រឹមត្រូវខ្ពស់បំផុត |
+| **SenseVoice** (`FunASR`, script `transcribe_sensevoice.py`) | លឿនបំផុតលើ CPU, ចិនល្អណាស់ (Alibaba, ធ្វើសម្រាប់ចិន/អង់គ្លេស), មាន timestamps | ដំឡើងធ្ងន់ជាងបន្តិច (FunASR + models) | វីដេអូយូរ, ចង់បានលឿន |
+| **Qwen3-ASR** (`transformers`, script `transcribe_qwen3.py`) | ថ្មីបំផុត (2025), ចិនត្រឹមត្រូវណាស់, ស្គាល់ភាសា 30+ | ត្រូវការ RAM ច្រើន (0.6B ប្រហែល 4GB RAM, 1.7B ត្រូវ GPU), **គ្មាន timestamps** — .srt បែងចែកតាមពេលវេលា (30 វិនាទីមួយបន្ទាត់) | បើមាន RAM គ្រប់ ឬចង់បានភាពត្រឹមត្រូវខ្ពស់បំផុត |
 
 ## វិធីប្រើ Whisper (ណែនាំ)
 
@@ -40,20 +61,22 @@ pip install funasr
 python3 transcribe_sensevoice.py video.mp4 -l zh
 ```
 
-## Qwen3-ASR (គ្មាន script ក្នុង folder នេះ — ប្រើ transformers)
+## Qwen3-ASR (script `transcribe_qwen3.py`)
 
 ```bash
-pip install transformers torch
+pip install "transformers>=5.13.0" torch
+python3 transcribe_qwen3.py video.mp4 -l zh
+# បើមាន RAM ច្រើន / GPU៖  python3 transcribe_qwen3.py video.mp4 --model Qwen/Qwen3-ASR-1.7B-hf
 ```
 
-```python
-from transformers import AutoModelForSpeechSeq2Seq, AutoProcessor
-import torch
-processor = AutoProcessor.from_pretrained("Qwen/Qwen3-ASR-0.6B")
-model = AutoModelForSpeechSeq2Seq.from_pretrained(
-    "Qwen/Qwen3-ASR-0.6B", dtype=torch.float16, device_map="auto")
-# រួច transcribe ជាមួយ return_timestamps=True ហើយសរសេរជា .srt
-```
+Model id ត្រឹមត្រូវគឺ `Qwen/Qwen3-ASR-0.6B-hf` (transformers-native)។
+Script បកសំឡេងជា chunk 30 វិនាទីម្ដង ព្រោះ model នេះមិនឱ្យ timestamps
+ទេ — .srt បែងចែកតាមពេលវេលា (ប្រយោគនីមួយៗទទួលបានចន្លោះពេលតាមប្រវែងអក្សរ)។
+បើចង់បាន timestamps ពិត ត្រូវប្រើ Qwen3-ForcedAligner បន្ថែម (មិនមានក្នុង script នេះ)។
+
+## វិធីប្រើ script ដោយឡែក (មិនប្រើ server)
+
+បើមិនចង់ដំណើរការ server អាច run script នីមួយៗដោយផ្ទាល់ រួចបញ្ចូល .srt ចូល app៖
 
 ## បញ្ចូល .srt ចូល app
 
@@ -79,10 +102,16 @@ Local ASR **មិនដឹងភេទអ្នកនិយាយទេ** (Gemi
 
 ## ចំណាំ
 
-- Script ទាំង 2 នេះបានត្រឹម `python3 -m py_compile` ប៉ុណ្ណោះ
-  (មិនបានសាក transcribe ពិតក្នុង sandbox នេះទេ ព្រោះត្រូវ download
-  model ធំៗ និង GPU)។ បើ run ហើយមាន error ផ្ញើ error មកឱ្យខ្ញុំ។
+- Script ទាំង 3 បានត្រឹម `python3 -m py_compile` ប៉ុណ្ណោះ លើកលែងតែ Whisper
+  ដែលបានសាក transcribe ពិតក្នុង sandbox (Khmer TTS clip → 1 cue, 2026-11-16)
+  និងសាក end-to-end តាម app button ម្តងទៀតពេលបន្ថែម engines ថ្មី។
+  SenseVoice និង Qwen3-ASR មិនទាន់បានសាក transcribe ពិតនៅឡើយ
+  (ត្រូវ download model ធំៗ និង torch) — បើ run ហើយមាន error
+  ផ្ញើ error មកឱ្យខ្ញុំ។
 - ត្រូវការ Python 3.9+ និង `ffmpeg` ក្នុង PATH (សម្រាប់អាន mp4)។
-- `transcribe.py` decode សំឡេងដោយ `ffmpeg` ផ្ទាល់ (មិនប្រើ PyAV)
-  ដើម្បីចៀសបញ្ហា version របស់ PyAV (`metadata_errors` error ដែលជួប
-  ពេលសាកលើ Muse)។
+- `transcribe.py` និង `whisper-server.py` decode សំឡេងដោយ `ffmpeg` ផ្ទាល់
+  (មិនប្រើ PyAV) ដើម្បីចៀសបញ្ហា version របស់ PyAV (`metadata_errors`
+  error ដែលជួបពេលសាកលើ Muse)។
+- **ទាំង 3 engines រត់តែលើកុំព្យូទ័ររបស់អ្នកទេ (localhost)។**
+  នៅលើទូរស័ព្ទ app មិនអាចចូល server ក្នុងកុំព្យូទ័របានទេ — វិធីលើទូរស័ព្ទ
+  នៅតែដដែល៖ ផ្ញើវីដេអូ/អូឌីយ៉ូមកឱ្យ Muse transcribe រួចយក .srt ត្រឡប់ទៅវិញ។
