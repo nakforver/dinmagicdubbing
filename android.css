@@ -5,7 +5,9 @@
 :root[data-theme="light"] .gbtn.m { color: #1d4ed8; background: #eff6ff; border-color: #93c5fd; }
 :root[data-theme="light"] .gbtn.f { color: #be185d; background: #fdf2f8; border-color: #f9a8d4; }
 .layout {
-  grid-template-areas: "studio settings";
+  /* Reading order follows the workflow: 1 setup (left), 2 video (right, wider), 3 results below. */
+  grid-template-areas: "settings studio";
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr);
 }
 .layout > main { grid-area: studio; }
 .layout > aside { grid-area: settings; position: static; }

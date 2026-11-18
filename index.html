@@ -17,8 +17,8 @@
   <link
     href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;family=Space+Grotesk:wght@500;600;700&amp;family=Noto+Sans+Khmer:wght@400;600;700&amp;display=swap"
     rel="stylesheet" />
-  <link rel="stylesheet" href="style.css?v=20261116b" />
-  <link rel="stylesheet" href="android.css?v=20261116b" />
+  <link rel="stylesheet" href="style.css?v=20261118a" />
+  <link rel="stylesheet" href="android.css?v=20261118b" />
   <script>try{var _lm=localStorage.getItem('dinmagic_layout');if(_lm==='phone'||_lm==='desktop')document.documentElement.classList.add('layout-'+_lm);}catch(e){}</script>
 </head>
 
@@ -326,32 +326,6 @@ gemini-2.0-flash-exp</textarea>
               មានអត្ថបទខ្មែររួច? ជ្រើសឯកសារ .srt, .vtt, .txt ឬវាយខាងក្រោម។
               ជម្រើសនេះរំលងការស្ដាប់ និងបកប្រែ ហើយបង្កើតសំឡេងតាមអត្ថបទរបស់អ្នក។
             </p>
-            <div id="whisperBox" style="margin-bottom:12px">
-              <label class="f" for="whisperUrl">🎙️ Transcript — មិនប្រើ Gemini (Cloud ឥតគិតថ្លៃ ឬ ក្នុងម៉ាស៊ីនខ្លួនឯង)</label>
-              <div style="display:flex;gap:8px;margin-top:6px">
-                <input id="whisperUrl" type="text" value="https://dinmagic-whisper-q98i15bk-nakforver.cloady.io" spellcheck="false" style="flex:1" />
-                <select id="whisperLang" style="width:110px">
-                  <option value="zh" selected="">ចិន</option>
-                  <option value="en">អង់គ្លេស</option>
-                  <option value="ko">កូរ៉េ</option>
-                  <option value="ja">ជប៉ុន</option>
-                  <option value="">Auto</option>
-                </select>
-              </div>
-              <div style="display:flex;gap:8px;align-items:center;margin-top:6px">
-                <label class="f" for="whisperEngine" style="margin:0">ម៉ាស៊ីនបកសំឡេង៖</label>
-                <select id="whisperEngine" style="flex:1">
-                  <option value="whisper" selected="">Whisper</option>
-                  <option value="sensevoice">SenseVoice (លឿនបំផុត)</option>
-                  <option value="qwen3">Qwen3-ASR (ត្រឹមត្រូវបំផុត)</option>
-                </select>
-              </div>
-              <div style="display:flex;gap:10px;align-items:center;margin-top:8px">
-                <button class="b" id="whisperBtn" type="button">🎙️ Transcribe with Whisper</button>
-                <span class="note" id="whisperStatus" style="margin:0">លំនាំដើម៖ server ឥតគិតថ្លៃនៅលើ Cloud (Whisper tiny — យឺត)។ បើចង់លឿន/ត្រឹមត្រូវជាង ដំណើរការ whisper-server.py លើកុំព្យូទ័រ ហើយប្ដូរ URL ខាងលើ។</span>
-              </div>
-              <p class="note">ផ្ញើវីដេអូទៅ server (លំនាំដើម Cloud — ប្រើបានពីទូរស័ព្ទ) រួចបំពេញអត្ថបទខាងក្រោមដោយស្វ័យប្រវត្តិ។ បន្ទាប់មកជ្រើស Translate Only ដើម្បីឱ្យ Gemini បកប្រែជាខ្មែរ។</p>
-            </div>
             <label for="srt" class="note" style="display:block;margin:10px 0 4px">ឯកសារ subtitle (.srt / .vtt / .txt) — ប្រើបើមាន subtitle រួចហើយ (មិនមែនវីដេអូទេ)</label>
             <input type="file" id="srt" accept=".srt,.vtt,.txt" style="font-size:13px" />
             <textarea id="srtText" style="min-height:150px;margin-top:10px" placeholder="1
@@ -570,7 +544,6 @@ gemini-2.0-flash-exp</textarea>
   </div>
   <script src="app.js?v=9c8211a7"></script>
   <script src="android.js?v=20261116b"></script>
-  <script src="whisper.js?v=20261117b"></script>
 </body>
 
 </html>
