@@ -44,6 +44,7 @@
 .blog > summary { padding: 12px; }
 .studio-hint { margin: 10px 0 0; font-size: 14px; color: var(--acc3); }
 .studio-hint:empty { display: none; }
+#clearVideoBtn { display: block; width: calc(100% - 16px); margin: 8px auto; min-height: 48px; }
 #dropTxt, #log, #voiceNote { overflow-wrap: anywhere; }
 .vol output { min-width: 3.5ch; font-variant-numeric: tabular-nums; text-align: right; }
 #resultsTitle { display: block; font-size: 18px; letter-spacing: 0; text-transform: none; color: var(--ink); }
@@ -114,7 +115,7 @@ body.modal-open { overflow: hidden; }
   .vol input { width: auto; flex: 1; min-width: 0; height: 44px; }
   .cta-split, html.layout-desktop .cta-split { width: 100%; min-width: 0; }
   .cta-split .cta { padding: 14px 10px; min-height: 52px; font-size: 15px; line-height: 1.7; }
-  .cta-mode { font-size: 12px; padding: 0 10px; min-height: 52px; }
+  .cta-mode { flex: 1 1 0; min-width: 0; justify-content: center; font-size: 13px; padding: 0 10px; min-height: 52px; }
   .cta-menu { max-width: 100%; width: 300px; }
   .cta-menu button { min-height: 64px; }
   .cta-menu button b { font-size: 14px; }

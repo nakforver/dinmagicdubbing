@@ -266,6 +266,42 @@
   document.addEventListener('focusin', syncViewport);
   document.addEventListener('focusout', () => setTimeout(syncViewport, 0));
 
+  // Hint under the Dub button: explain why it is disabled (no video yet).
+  // Shows only when the button is disabled AND no video is loaded, so it
+  // never appears while a dub is running.
+  const goBtn = byId('go'), goHint = byId('goHint');
+  function syncGoHint() {
+    if (!goBtn || !goHint) return;
+    const hasVideo = Boolean((byId('file').files && byId('file').files.length) || byId('v').src);
+    goHint.hidden = !goBtn.disabled || hasVideo;
+  }
+  if (goBtn && goHint) {
+    new MutationObserver(syncGoHint).observe(goBtn, { attributes: true, attributeFilter: ['disabled'] });
+    byId('file').addEventListener('change', syncGoHint);
+    syncGoHint();
+  }
+
+  // Delete the loaded video (the app has no built-in remove control).
+  // Clears the picker, the preview and the results, and disables Dub so
+  // the app cannot run on a stale video. Picking a new video works as before.
+  const clearVideoBtn = byId('clearVideoBtn');
+  if (clearVideoBtn) clearVideoBtn.addEventListener('click', () => {
+    const file = byId('file'), v = byId('v');
+    try { v.pause(); } catch (_) {}
+    if (v.src && v.src.indexOf('blob:') === 0) { try { URL.revokeObjectURL(v.src); } catch (_) {} }
+    v.removeAttribute('src');
+    try { v.load(); } catch (_) {}
+    file.value = '';
+    file.dispatchEvent(new Event('change', { bubbles: true }));
+    byId('stage').hidden = true;
+    byId('dropTxt').textContent = 'ចុចដើម្បីជ្រើសវីដេអូ';
+    byId('list').innerHTML = '';
+    const resCard = byId('resCard'); if (resCard) resCard.hidden = true;
+    const bar = byId('bar'); if (bar) bar.style.width = '0%';
+    if (goBtn) goBtn.disabled = true;
+    syncGoHint();
+  });
+
   applyLayout();
   updateSetup();
   syncTabs();
